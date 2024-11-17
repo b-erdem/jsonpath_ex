@@ -1,10 +1,14 @@
 defmodule JsonpathEx.Evaluator do
   def evaluate(ast, json) do
-    ast
-    |> Enum.reduce(json, fn node, acc -> eval_ast(node, acc) end)
+    evaluate1(ast, json, json)
   end
 
-  def eval_ast(ast, json) do
+  def evaluate1(ast, json, original_json) do
+    ast
+    |> Enum.reduce(json, fn node, acc -> eval_ast(node, acc, original_json) end)
+  end
+
+  def eval_ast(ast, json, original_json) do
     case ast do
       {:root, _root} ->
         json
@@ -15,7 +19,9 @@ defmodule JsonpathEx.Evaluator do
       {:dot_child, [dot_wildcard: _]} ->
         json
 
-      # {:dot_child, [deep_scan_wildcard: _]} -> json
+      {:dot_child, [deep_scan_wildcard: _]} ->
+        deepscan(json)
+
       {:dot_child, [{:deep_scan, _}, key]} ->
         scan(json, key)
 
@@ -34,13 +40,13 @@ defmodule JsonpathEx.Evaluator do
         json
 
       {:recursive_descent, _} ->
-        eval_recursive_descent(json)
+        json
 
       {:array, array_op} ->
         eval_array(array_op, json)
 
       {:filter_expression, filters} ->
-        eval_filter(json, filters)
+        eval_filter(json, filters, original_json)
 
       {:function, function} ->
         eval_function(json, function)
@@ -48,6 +54,15 @@ defmodule JsonpathEx.Evaluator do
       {:value, [value]} ->
         value
     end
+  end
+
+  def deepscan(data) do
+    Enum.reduce(data, [], fn
+      {_k, v}, acc when is_map(v) -> [v | acc] ++ deepscan(v)
+      {_k, v}, acc when is_list(v) -> [v | acc] ++ deepscan(v)
+      {_k, v}, acc -> [v | acc]
+      v, acc -> [v | acc]
+    end)
   end
 
   # TODO: extract to separate module
@@ -72,14 +87,11 @@ defmodule JsonpathEx.Evaluator do
 
   def scan(_other, _key), do: []
 
-  def eval_recursive_descent(json) do
-    json
-  end
-
   def eval_array(array_op, json) do
     case array_op do
       [array_wildcard: _] -> json
-      [array_indices: indices] -> indices |> Enum.map(&Enum.at(json, &1))
+      [array_indices: [indice]] -> Enum.at(json, indice)
+      [array_indices: [_h | _t] = indices] -> indices |> Enum.map(&Enum.at(json, &1))
       [array_slice: []] -> json
       [array_slice: [end: [end_]]] -> Enum.slice(json, 0, end_)
       [array_slice: [begin: [begin]]] -> Enum.slice(json, begin, length(json))
@@ -87,48 +99,65 @@ defmodule JsonpathEx.Evaluator do
     end
   end
 
-  def eval_filter(json, filters) do
-    filters
-    |> Enum.reduce(json, fn filter, acc -> acc end)
-  end
-
-  def eval_logical_expression(json, lhs, operator, rhs) do
-    {:logical_operator, [{_, [operator]}]} = operator
-
-    Enum.filter(json, fn x ->
-      lhs_value = eval_lhs(x, lhs)
-      rhs_value = eval_rhs(x, rhs)
-
-      case operator do
-        "==" -> lhs_value == rhs_value
-        "!=" -> lhs_value != rhs_value
-        "<" -> lhs_value < rhs_value
-        "<=" -> lhs_value <= rhs_value
-        ">" -> lhs_value > rhs_value
-        ">=" -> lhs_value >= rhs_value
-      end
+  def eval_filter(json, filters, original_json) do
+    json
+    |> Enum.filter(fn x ->
+      filters
+      |> Enum.reduce(true, fn filter, _acc ->
+        eval_term(x, filter, original_json)
+      end)
     end)
   end
 
-  def eval_lhs(json, current_context) do
-    case current_context do
-      {:operand, [current_context: [_, lhs]]} -> eval_ast(json, lhs)
-    end
+  def eval_term(json, {:term, term}, original_json) do
+    sequence =
+      Enum.reduce(term, [], fn node, acc ->
+        eval_node(acc, node, json, original_json)
+      end)
+
+    sequence
+    |> Enum.reverse()
+    |> calculate()
   end
 
-  def eval_rhs(json, rhs) do
-    case rhs do
-      {:current_context, [_, rhs]} -> eval_ast(json, rhs)
-      other -> eval_ast(json, other)
-    end
+  def calculate([result]), do: result
+
+  def calculate([n1, op, n2 | rest]) do
+    ops = %{
+      "+" => fn a, b -> a + b end,
+      "-" => fn a, b -> a - b end,
+      "*" => fn a, b -> a * b end,
+      "/" => fn a, b -> a / b end,
+      "==" => fn a, b -> a == b end,
+      "!=" => fn a, b -> a != b end,
+      "<" => fn a, b -> a < b end,
+      "<=" => fn a, b -> a <= b end,
+      ">" => fn a, b -> a > b end,
+      ">=" => fn a, b -> a >= b end,
+      "&&" => fn a, b -> a && b end,
+      "||" => fn a, b -> a || b end
+    }
+
+    calculate([ops[op].(n1, n2) | rest])
   end
 
-  def eval_arithmetic_expression(json, lhs, operator, rhs) do
-    case operator do
-      "+" -> eval_ast(json, lhs) + eval_ast(json, rhs)
-      "-" -> eval_ast(json, lhs) - eval_ast(json, rhs)
-      "*" -> eval_ast(json, lhs) * eval_ast(json, rhs)
-      "/" -> eval_ast(json, lhs) / eval_ast(json, rhs)
+  def eval_node(sequence, node, json, original_json) do
+    case node do
+      # {:not, _} -> {json, ["!" | sequence]}
+      {:grouping, [group]} ->
+        [eval_term(json, group, original_json) | sequence]
+
+      {:operand, [value: [value]]} ->
+        [value | sequence]
+
+      {:operand, [current_context: [{:current, _v} | rest]]} ->
+        [evaluate1(rest, json, original_json) | sequence]
+
+      {:operand, [root_key: rest]} ->
+        [evaluate1(rest, original_json, original_json) | sequence]
+
+      {:operator, [{_, [operator]}]} ->
+        [operator | sequence]
     end
   end
 

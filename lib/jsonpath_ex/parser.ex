@@ -31,21 +31,14 @@ defmodule JsonpathEx.Parser do
   defcombinatorp(
     :term,
     parsec(:operand)
-    |> repeat(Helpers.compare_operator() |> parsec(:operand))
+    |> repeat(Helpers.all_operators() |> parsec(:operand))
     |> tag(:term)
   )
 
   defparsec(
     :expression,
     parsec(:term)
-    |> repeat(
-      choice([
-        Helpers.compare_operator(),
-        Helpers.arithmetic_operator(),
-        Helpers.logical_operator()
-      ])
-      |> parsec(:term)
-    )
+    |> repeat(Helpers.all_operators() |> parsec(:term))
   )
 
   # The main JsonPath expression

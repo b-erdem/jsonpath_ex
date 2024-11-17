@@ -31,7 +31,7 @@ defmodule JsonpathEx.Helpers do
   def boolean, do: choice([true_(), false_()]) |> tag(:boolean)
 
   def logical_operator,
-    do: whitespace() |> choice([and_(), or_(), not_()]) |> whitespace() |> tag(:logical_operator)
+    do: whitespace() |> choice([and_(), or_(), not_()]) |> whitespace()
 
   def eq, do: string("==") |> tag(:eq)
   def gt, do: string(">") |> tag(:gt)
@@ -48,7 +48,6 @@ defmodule JsonpathEx.Helpers do
       whitespace()
       |> choice([eq2(), eq(), ge(), le(), gt(), lt(), ne(), in_(), nin(), eq2()])
       |> whitespace()
-      |> tag(:compare_operator)
 
   def add, do: string("+") |> tag(:add)
   def sub, do: string("-") |> tag(:sub)
@@ -61,7 +60,9 @@ defmodule JsonpathEx.Helpers do
       whitespace()
       |> choice([add(), sub(), mul(), div(), mod()])
       |> whitespace()
-      |> tag(:arithmetic_operator)
+
+  def all_operators,
+    do: choice([compare_operator(), logical_operator(), arithmetic_operator()]) |> tag(:operator)
 
   def length_, do: string("length()") |> tag(:length)
   def min_, do: string("min()") |> tag(:min)
@@ -99,7 +100,7 @@ defmodule JsonpathEx.Helpers do
       |> tag(:array)
 
   def whitespace(combinator), do: concat(combinator, whitespace())
-  def whitespace, do: ignore(optional(utf8_string([?\s], min: 0))) |> tag(:whitespace)
+  def whitespace, do: ignore(optional(utf8_string([?\s], min: 0)))
 
   def single_quoted_string,
     do:
