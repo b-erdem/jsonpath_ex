@@ -30,9 +30,6 @@ defmodule JsonpathEx.Helpers do
 
   def boolean, do: choice([true_(), false_()]) |> unwrap_and_tag(:boolean)
 
-  def logical_operator,
-    do: whitespace() |> choice([and_(), or_(), not_()]) |> whitespace()
-
   def eq, do: string("==") |> replace(:==)
   def gt, do: string(">") |> replace(:>)
   def lt, do: string("<") |> replace(:<)
@@ -43,17 +40,20 @@ defmodule JsonpathEx.Helpers do
   def nin, do: string("nin") |> replace(:"not in")
   def eq2, do: string("===") |> replace(:===)
 
-  def compare_operator,
+  def add, do: string("+") |> replace(:+)
+  def sub, do: string("-") |> replace(:-)
+  def mul, do: string("*") |> replace(:*)
+  def div, do: string("/") |> replace(:/)
+  def mod, do: string("%") |> replace(:%)
+
+  def comparison_operator,
     do:
       whitespace()
       |> choice([eq2(), eq(), ge(), le(), gt(), lt(), ne(), in_(), nin(), eq2()])
       |> whitespace()
 
-  def add, do: string("+") |> unwrap_and_tag(:add)
-  def sub, do: string("-") |> unwrap_and_tag(:sub)
-  def mul, do: string("*") |> unwrap_and_tag(:mul)
-  def div, do: string("/") |> unwrap_and_tag(:div)
-  def mod, do: string("%") |> unwrap_and_tag(:mod)
+  def logical_operator,
+    do: whitespace() |> choice([and_(), or_(), not_()]) |> whitespace()
 
   def arithmetic_operator,
     do:
@@ -61,9 +61,9 @@ defmodule JsonpathEx.Helpers do
       |> choice([add(), sub(), mul(), div(), mod()])
       |> whitespace()
 
-  def all_operators,
+  def operators,
     do:
-      choice([compare_operator(), logical_operator(), arithmetic_operator()])
+      choice([comparison_operator(), logical_operator(), arithmetic_operator()])
       |> unwrap_and_tag(:operator)
 
   def length_, do: string("length()") |> replace(:length)
@@ -71,7 +71,8 @@ defmodule JsonpathEx.Helpers do
   def max_, do: string("max()") |> replace(:max)
   def sum_, do: string("sum()") |> replace(:sum)
 
-  def function, do: choice([length_(), min_(), max_(), sum_()]) |> unwrap_and_tag(:function)
+  def function,
+    do: ignore(dot()) |> choice([length_(), min_(), max_(), sum_()]) |> unwrap_and_tag(:function)
 
   def array_indices,
     do:
@@ -97,7 +98,7 @@ defmodule JsonpathEx.Helpers do
   def array,
     do:
       ignore(left_bracket())
-      |> concat(choice([array_slice(), array_indices(), array_wildcard()]))
+      |> choice([array_slice(), array_indices(), array_wildcard()])
       |> ignore(right_bracket())
       |> tag(:array)
 
@@ -107,14 +108,14 @@ defmodule JsonpathEx.Helpers do
   def single_quoted_string,
     do:
       ignore(single_quote())
-      |> concat(utf8_string(all_chars(), min: 1))
-      |> concat(ignore(single_quote()))
+      |> utf8_string(all_chars(), min: 1)
+      |> ignore(single_quote())
 
   def double_quoted_string,
     do:
       ignore(double_quote())
-      |> concat(utf8_string(all_chars(), min: 1))
-      |> concat(ignore(double_quote()))
+      |> utf8_string(all_chars(), min: 1)
+      |> ignore(double_quote())
 
   # Dot-notated child
   def dot_child,
@@ -136,7 +137,7 @@ defmodule JsonpathEx.Helpers do
     do:
       ignore(left_bracket())
       |> concat(quoted_key())
-      |> concat(repeat(ignore(comma()) |> concat(quoted_key())))
+      |> repeat(ignore(comma()) |> concat(quoted_key()))
       |> ignore(right_bracket())
       |> tag(:bracket_child)
 
@@ -223,7 +224,7 @@ defmodule JsonpathEx.Helpers do
         dot_child(),
         array(),
         bracket_child(),
-        dot() |> concat(function())
+        function()
       ])
     )
   end
