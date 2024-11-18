@@ -25,16 +25,8 @@ defmodule JsonpathEx.Evaluator do
       {:dot_child, [{:deep_scan, _}, key]} ->
         scan(json, key)
 
-      {:dot_child, [_, key]} ->
-        if is_list(json), do: Enum.map(json, &Map.get(&1, key)), else: Map.get(json, key)
-
-      {:bracket_child, [field_name: [field_name]]} ->
-        if is_list(json),
-          do: Enum.map(json, &Map.get(&1, field_name)),
-          else: Map.get(json, field_name)
-
-      {:field, field} ->
-        Map.get(json, field)
+      {child_key, [key]} when child_key in [:dot_child, :bracket_child] ->
+        get(json, key)
 
       {:wildcard, _} ->
         json
@@ -54,6 +46,14 @@ defmodule JsonpathEx.Evaluator do
       {:value, [value]} ->
         value
     end
+  end
+
+  def get(json, key) when is_list(json) do
+    Enum.map(json, &Map.get(&1, key))
+  end
+
+  def get(json, key) do
+    Map.get(json, key)
   end
 
   def deepscan(data) do
@@ -93,9 +93,9 @@ defmodule JsonpathEx.Evaluator do
       [array_indices: [indice]] -> Enum.at(json, indice)
       [array_indices: [_h | _t] = indices] -> indices |> Enum.map(&Enum.at(json, &1))
       [array_slice: []] -> json
-      [array_slice: [end: [end_]]] -> Enum.slice(json, 0, end_)
-      [array_slice: [begin: [begin]]] -> Enum.slice(json, begin, length(json))
-      [array_slice: [begin: [begin], end: [end_]]] -> Enum.slice(json, begin, end_)
+      [array_slice: [begin: begin, end: end_]] -> Enum.slice(json, begin, end_)
+      [array_slice: [begin: begin]] -> Enum.slice(json, begin, length(json))
+      [array_slice: [end: end_]] -> Enum.slice(json, 0, end_)
     end
   end
 
@@ -123,22 +123,7 @@ defmodule JsonpathEx.Evaluator do
   def calculate([result]), do: result
 
   def calculate([n1, op, n2 | rest]) do
-    ops = %{
-      "+" => fn a, b -> a + b end,
-      "-" => fn a, b -> a - b end,
-      "*" => fn a, b -> a * b end,
-      "/" => fn a, b -> a / b end,
-      "==" => fn a, b -> a == b end,
-      "!=" => fn a, b -> a != b end,
-      "<" => fn a, b -> a < b end,
-      "<=" => fn a, b -> a <= b end,
-      ">" => fn a, b -> a > b end,
-      ">=" => fn a, b -> a >= b end,
-      "&&" => fn a, b -> a && b end,
-      "||" => fn a, b -> a || b end
-    }
-
-    calculate([ops[op].(n1, n2) | rest])
+    calculate([apply(Kernel, op, [n1, n2]) | rest])
   end
 
   def eval_node(sequence, node, json, original_json) do
@@ -147,26 +132,26 @@ defmodule JsonpathEx.Evaluator do
       {:grouping, [group]} ->
         [eval_term(json, group, original_json) | sequence]
 
-      {:operand, [value: [value]]} ->
+      {:operand, {:value, value}} ->
         [value | sequence]
 
-      {:operand, [current_context: [{:current, _v} | rest]]} ->
+      {:operand, {:current_context, [{:current, _v} | rest]}} ->
         [evaluate1(rest, json, original_json) | sequence]
 
-      {:operand, [root_key: rest]} ->
+      {:operand, {:root_key, rest}} ->
         [evaluate1(rest, original_json, original_json) | sequence]
 
-      {:operator, [{_, [operator]}]} ->
+      {:operator, operator} ->
         [operator | sequence]
     end
   end
 
   def eval_function(json, function) do
     case function do
-      [sum: _] -> Enum.sum(json)
-      [length: _] -> Enum.count(json)
-      [min: _] -> Enum.min(json)
-      [max: _] -> Enum.max(json)
+      :sum -> Enum.sum(json)
+      :length -> Enum.count(json)
+      :min -> Enum.min(json)
+      :max -> Enum.max(json)
     end
   end
 end
