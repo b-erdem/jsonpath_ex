@@ -46,20 +46,14 @@ defmodule JsonpathEx.Helpers do
   def div, do: string("/") |> replace(:/)
   def mod, do: string("%") |> replace(:%)
 
+  def ws_around(combinator), do: between(whitespace(), whitespace(), combinator)
+
   def comparison_operator,
-    do:
-      whitespace()
-      |> choice([eq2(), eq(), ge(), le(), gt(), lt(), ne(), in_(), nin(), eq2()])
-      |> whitespace()
+    do: choice([eq2(), eq(), ge(), le(), gt(), lt(), ne(), in_(), nin()]) |> ws_around()
 
-  def logical_operator,
-    do: whitespace() |> choice([and_(), or_(), not_()]) |> whitespace()
+  def logical_operator, do: choice([and_(), or_(), not_()]) |> ws_around()
 
-  def arithmetic_operator,
-    do:
-      whitespace()
-      |> choice([add(), sub(), mul(), div(), mod()])
-      |> whitespace()
+  def arithmetic_operator, do: choice([add(), sub(), mul(), div(), mod()]) |> ws_around()
 
   def operators,
     do:
@@ -148,8 +142,8 @@ defmodule JsonpathEx.Helpers do
   def quoted_field_name do
     choice([
       field_name(),
-      between(ignore(string("'")), ignore(string("'")), field_name()),
-      between(ignore(string("\"")), ignore(string("\"")), field_name())
+      between(ignore(single_quote()), ignore(single_quote()), field_name()),
+      between(ignore(double_quote()), ignore(double_quote()), field_name())
     ])
   end
 

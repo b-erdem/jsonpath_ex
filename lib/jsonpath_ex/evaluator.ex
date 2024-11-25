@@ -1,17 +1,18 @@
 defmodule JsonpathEx.Evaluator do
+  @comparison_operators [:<, :>, :<=, :>=, :==, :!=]
+
   def evaluate(ast, json) do
     evaluate1(ast, json, json)
   end
 
   def evaluate1(ast, json, original_json) do
-    ast
-    |> Enum.reduce(json, fn node, acc -> eval_ast(node, acc, original_json) end)
+    Enum.reduce(ast, json, fn node, acc -> eval_ast(node, acc, original_json) end)
   end
 
   def eval_ast(ast, json, original_json) do
     case ast do
-      {:root, _root} ->
-        json
+      {:root, _} ->
+        original_json
 
       {:dot, _} ->
         json
@@ -52,9 +53,11 @@ defmodule JsonpathEx.Evaluator do
     Enum.map(json, &Map.get(&1, key))
   end
 
-  def get(json, key) do
+  def get(json, key) when is_map(json) do
     Map.get(json, key)
   end
+
+  def get(_other, _key), do: []
 
   def deepscan(data) do
     Enum.reduce(data, [], fn
@@ -87,17 +90,26 @@ defmodule JsonpathEx.Evaluator do
 
   def scan(_other, _key), do: []
 
-  def eval_array(array_op, json) do
+  def eval_array(array_op, json) when is_list(json) do
     case array_op do
-      [array_wildcard: _] -> json
-      [array_indices: [indice]] -> Enum.at(json, indice)
-      [array_indices: [_h | _t] = indices] -> indices |> Enum.map(&Enum.at(json, &1))
-      [array_slice: []] -> json
-      [array_slice: [begin: begin, end: end_]] -> Enum.slice(json, begin, end_)
-      [array_slice: [begin: begin]] -> Enum.slice(json, begin, length(json))
-      [array_slice: [end: end_]] -> Enum.slice(json, 0, end_)
+      [array_wildcard: _] ->
+        json
+
+      [array_indices: indices] ->
+        indices |> Enum.map(&Enum.at(json, &1))
+
+      [array_slice: slice_params] ->
+        start = Keyword.get(slice_params, :begin, 0)
+        stop = Keyword.get(slice_params, :end, length(json))
+        step = Keyword.get(slice_params, :step, 1)
+
+        json
+        |> Enum.slice(start, stop - start)
+        |> Enum.take_every(step)
     end
   end
+
+  def eval_array(_, _), do: []
 
   def eval_filter(json, filters, original_json) do
     json
@@ -116,14 +128,22 @@ defmodule JsonpathEx.Evaluator do
       end)
 
     sequence
+    |> Enum.reject(&is_nil/1)
     |> Enum.reverse()
-    |> calculate()
+    |> group_by_comparisons()
+    |> Enum.map(&eval_arith/1)
+    |> Enum.flat_map(fn
+      [op] when op in @comparison_operators -> [op]
+      rpn -> evaluate_rpn(rpn)
+    end)
+    |> compare()
   end
 
-  def calculate([result]), do: result
+  def compare([]), do: nil
+  def compare([result]), do: result
 
-  def calculate([n1, op, n2 | rest]) do
-    calculate([apply(Kernel, op, [n1, n2]) | rest])
+  def compare([n1, op, n2 | rest]) do
+    compare([apply(Kernel, op, [n1, n2]) | rest])
   end
 
   def eval_node(sequence, node, json, original_json) do
@@ -135,7 +155,7 @@ defmodule JsonpathEx.Evaluator do
       {:operand, {:value, value}} ->
         [value | sequence]
 
-      {:operand, {:current_context, [{:current, _v} | rest]}} ->
+      {:operand, {:current_context, [{:current, _} | rest]}} ->
         [evaluate1(rest, json, original_json) | sequence]
 
       {:operand, {:root_key, rest}} ->
@@ -153,5 +173,43 @@ defmodule JsonpathEx.Evaluator do
       :min -> Enum.min(json)
       :max -> Enum.max(json)
     end
+  end
+
+  def group_by_comparisons(list) do
+    Enum.reduce(list, {[], []}, fn
+      # If the element is a comparison operator, push the current group to the accumulator and start a new group with just the operator
+      elem, {acc, current} when elem in @comparison_operators ->
+        {acc ++ [current] ++ [[elem]], []}
+
+      elem, {acc, current} ->
+        {acc, current ++ [elem]}
+    end)
+    |> then(fn {acc, current} -> acc ++ [current] end)
+  end
+
+  def eval_arith(list) do
+    precedence = %{:* => 2, :/ => 2, :% => 2, :+ => 1, :- => 1}
+
+    {output, stack} =
+      list
+      |> Enum.reduce({[], []}, fn
+        x, {output, stack} when is_number(x) ->
+          {[x | output], stack}
+
+        op, {output, stack} ->
+          {new_stack, new_output} =
+            Enum.split_while(stack, fn s -> Map.get(precedence, op) >= Map.get(precedence, s) end)
+
+          {Enum.reverse(new_output) ++ output, Enum.reverse([op | new_stack])}
+      end)
+
+    Enum.reverse(output) ++ Enum.reverse(stack)
+  end
+
+  def evaluate_rpn(rpn) do
+    Enum.reduce(rpn, [], fn
+      num, stack when is_number(num) or is_binary(num) -> [num | stack]
+      op, [n2, n1 | rest] -> [apply(Kernel, op, [n1, n2]) | rest]
+    end)
   end
 end

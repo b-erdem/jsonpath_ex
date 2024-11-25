@@ -47,6 +47,7 @@ defmodule JsonpathExTest do
     assert {:ok, ["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]} ==
              JsonpathEx.evaluate("$..author", @example)
 
+    # this is not correct
     assert {:ok,
             %{
               "bicycle" => %{"color" => "red", "price" => 19.95},
@@ -84,22 +85,26 @@ defmodule JsonpathExTest do
              JsonpathEx.evaluate("$.store..price", @example)
 
     assert {:ok,
-            %{
-              "author" => "Herman Melville",
-              "category" => "fiction",
-              "isbn" => "0-553-21311-3",
-              "price" => 8.99,
-              "title" => "Moby Dick"
-            }} == JsonpathEx.evaluate("$..book[2]", @example)
+            [
+              %{
+                "author" => "Herman Melville",
+                "category" => "fiction",
+                "isbn" => "0-553-21311-3",
+                "price" => 8.99,
+                "title" => "Moby Dick"
+              }
+            ]} == JsonpathEx.evaluate("$..book[2]", @example)
 
     assert {:ok,
-            %{
-              "author" => "Herman Melville",
-              "category" => "fiction",
-              "isbn" => "0-553-21311-3",
-              "price" => 8.99,
-              "title" => "Moby Dick"
-            }} == JsonpathEx.evaluate("$..book[-2]", @example)
+            [
+              %{
+                "author" => "Herman Melville",
+                "category" => "fiction",
+                "isbn" => "0-553-21311-3",
+                "price" => 8.99,
+                "title" => "Moby Dick"
+              }
+            ]} == JsonpathEx.evaluate("$..book[-2]", @example)
 
     assert {:ok,
             [
@@ -140,13 +145,6 @@ defmodule JsonpathExTest do
                 "category" => "fiction",
                 "price" => 12.99,
                 "title" => "Sword of Honour"
-              },
-              %{
-                "author" => "Herman Melville",
-                "category" => "fiction",
-                "isbn" => "0-553-21311-3",
-                "price" => 8.99,
-                "title" => "Moby Dick"
               }
             ]} == JsonpathEx.evaluate("$..book[1:2]", @example)
 
