@@ -1,15 +1,26 @@
 defmodule JsonpathEx.Evaluator do
+  @moduledoc """
+  Evaluates JSONPath Abstract Syntax Trees (ASTs) against JSON data.
+
+  Supports JSONPath features such as filters, recursive descent, and array slicing.
+  """
+
   @comparison_operators [:<, :>, :<=, :>=, :==, :!=]
 
+  @doc """
+  Evaluates a JSONPath AST against the provided JSON data.
+
+  Returns the evaluation result or an empty list if the path doesn't match.
+  """
   def evaluate(ast, json) do
     evaluate1(ast, json, json)
   end
 
-  def evaluate1(ast, json, original_json) do
+  defp evaluate1(ast, json, original_json) do
     Enum.reduce(ast, json, fn node, acc -> eval_ast(node, acc, original_json) end)
   end
 
-  def eval_ast(ast, json, original_json) do
+  defp eval_ast(ast, json, original_json) do
     case ast do
       {:root, _} ->
         original_json
@@ -49,17 +60,17 @@ defmodule JsonpathEx.Evaluator do
     end
   end
 
-  def get(json, key) when is_list(json) do
+  defp get(json, key) when is_list(json) do
     Enum.map(json, &Map.get(&1, key))
   end
 
-  def get(json, key) when is_map(json) do
+  defp get(json, key) when is_map(json) do
     Map.get(json, key)
   end
 
-  def get(_other, _key), do: []
+  defp get(_other, _key), do: []
 
-  def deepscan(data) do
+  defp deepscan(data) do
     Enum.reduce(data, [], fn
       {_k, v}, acc when is_map(v) -> [v | acc] ++ deepscan(v)
       {_k, v}, acc when is_list(v) -> [v | acc] ++ deepscan(v)
@@ -69,7 +80,7 @@ defmodule JsonpathEx.Evaluator do
   end
 
   # TODO: extract to separate module
-  def scan(map, key) when is_map(map) do
+  defp scan(map, key) when is_map(map) do
     map
     |> Enum.reduce([], fn
       # Check if the current key matches the search key
@@ -82,15 +93,15 @@ defmodule JsonpathEx.Evaluator do
     |> List.flatten()
   end
 
-  def scan(list, key) when is_list(list) do
+  defp scan(list, key) when is_list(list) do
     list
     |> Enum.map(&scan(&1, key))
     |> List.flatten()
   end
 
-  def scan(_other, _key), do: []
+  defp scan(_other, _key), do: []
 
-  def eval_array(array_op, json) when is_list(json) do
+  defp eval_array(array_op, json) when is_list(json) do
     case array_op do
       [array_wildcard: _] ->
         json
@@ -109,9 +120,9 @@ defmodule JsonpathEx.Evaluator do
     end
   end
 
-  def eval_array(_, _), do: []
+  defp eval_array(_, _), do: []
 
-  def eval_filter(json, filters, original_json) do
+  defp eval_filter(json, filters, original_json) do
     json
     |> Enum.filter(fn x ->
       filters
@@ -121,7 +132,7 @@ defmodule JsonpathEx.Evaluator do
     end)
   end
 
-  def eval_term(json, {:term, term}, original_json) do
+  defp eval_term(json, {:term, term}, original_json) do
     sequence =
       Enum.reduce(term, [], fn node, acc ->
         eval_node(acc, node, json, original_json)
@@ -139,14 +150,14 @@ defmodule JsonpathEx.Evaluator do
     |> compare()
   end
 
-  def compare([]), do: nil
-  def compare([result]), do: result
+  defp compare([]), do: nil
+  defp compare([result]), do: result
 
-  def compare([n1, op, n2 | rest]) do
+  defp compare([n1, op, n2 | rest]) do
     compare([apply(Kernel, op, [n1, n2]) | rest])
   end
 
-  def eval_node(sequence, node, json, original_json) do
+  defp eval_node(sequence, node, json, original_json) do
     case node do
       # {:not, _} -> {json, ["!" | sequence]}
       {:grouping, [group]} ->
@@ -166,7 +177,7 @@ defmodule JsonpathEx.Evaluator do
     end
   end
 
-  def eval_function(json, function) do
+  defp eval_function(json, function) do
     case function do
       :sum -> Enum.sum(json)
       :length -> Enum.count(json)
@@ -175,7 +186,7 @@ defmodule JsonpathEx.Evaluator do
     end
   end
 
-  def group_by_comparisons(list) do
+  defp group_by_comparisons(list) do
     Enum.reduce(list, {[], []}, fn
       # If the element is a comparison operator, push the current group to the accumulator and start a new group with just the operator
       elem, {acc, current} when elem in @comparison_operators ->
@@ -187,7 +198,7 @@ defmodule JsonpathEx.Evaluator do
     |> then(fn {acc, current} -> acc ++ [current] end)
   end
 
-  def eval_arith(list) do
+  defp eval_arith(list) do
     precedence = %{:* => 2, :/ => 2, :% => 2, :+ => 1, :- => 1}
 
     {output, stack} =
@@ -206,7 +217,7 @@ defmodule JsonpathEx.Evaluator do
     Enum.reverse(output) ++ Enum.reverse(stack)
   end
 
-  def evaluate_rpn(rpn) do
+  defp evaluate_rpn(rpn) do
     Enum.reduce(rpn, [], fn
       num, stack when is_number(num) or is_binary(num) -> [num | stack]
       op, [n2, n1 | rest] -> [apply(Kernel, op, [n1, n2]) | rest]

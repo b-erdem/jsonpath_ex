@@ -1,11 +1,22 @@
 # JsonpathEx
 
-**TODO: Add description**
+[![Elixir](https://img.shields.io/badge/elixir-~%3E%201.14-purple.svg)](https://elixir-lang.org/)  
+A powerful and flexible Elixir library for parsing, evaluating, and navigating JSON data using [JSONPath](https://goessner.net/articles/JsonPath/).
+
+---
+
+## Features
+
+- **JSONPath Parsing**: Robust support for JSONPath syntax, including recursive descent, filters, and array slicing.
+- **JSONPath Evaluation**: Navigate and query JSON objects or arrays with ease.
+- **Highly Configurable**: Modular design allows easy customization and extension.
+- **Efficient Parsing**: Built on [`NimbleParsec`](https://hexdocs.pm/nimble_parsec), ensuring performance and flexibility.
+
+---
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `jsonpath_ex` to your list of dependencies in `mix.exs`:
+Add `jsonpath_ex` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -15,7 +26,115 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/jsonpath_ex>.
+Then run:
 
+```bash
+mix deps.get
+```
+
+## Usage
+
+### Evaluating JSONPath Expressions
+
+The `JsonpathEx` module provides a convenient evaluate/2 function to parse and evaluate a JSONPath expression in one step:
+
+```elixir
+iex> json_data = %{
+...>   "store" => %{
+...>     "book" => [
+...>       %{
+...>         "category" => "reference",
+...>         "author" => "Nigel Rees",
+...>         "title" => "Sayings of the Century",
+...>         "price" => 8.95
+...>       }
+...>     ]
+...>   }
+...> }
+iex> JsonpathEx.evaluate("$.store.book[*].title", json_data)
+{:ok, ["Sayings of the Century"]}
+```
+
+### Parsing JSONPath Expressions
+
+Use the `JsonpathEx.Parser` module to parse a JSONPath string into an Abstract Syntax Tree (AST):
+
+```elixir
+iex> JsonpathEx.Parser.parse("$.store.book[*].author")
+{:ok, [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]}
+```
+
+### Evaluating JSONPath Expressions
+
+Use the `JsonpathEx.Evaluator` module to evaluate a JSONPath AST against JSON data:
+
+```elixir
+iex> ast = [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]
+iex> json = %{
+...>   "store" => %{
+...>     "book" => [
+...>       %{"author" => "Author 1"},
+...>       %{"author" => "Author 2"}
+...>     ]
+...>   }
+...> }
+iex> JsonpathEx.Evaluator.evaluate(ast, json)
+["Author 1", "Author 2"]
+```
+
+### Evaluating JSONPath ASTs
+
+Use the JsonpathEx.Evaluator module to evaluate a JSONPath AST against JSON data:
+
+```elixir
+iex> ast = [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]
+iex> json = %{
+...>   "store" => %{
+...>     "book" => [
+...>       %{"author" => "Author 1"},
+...>       %{"author" => "Author 2"}
+...>     ]
+...>   }
+...> }
+iex> JsonpathEx.Evaluator.evaluate(ast, json)
+["Author 1", "Author 2"]
+```
+
+## Supported JSONPath Features
+
+- **Root Selector** (`$`)
+- **Current Context** (`@`)
+- **Dot Notation** (`.key`)
+- **Bracket Notation** (`['key']`)
+- **Wildcard Selector** (`*`)
+- **Recursive Descent** (`..`)
+- **Array Slicing** (`[start:end:step]`)
+- **Filters** (`[?(@.key < 10)]`)
+- **Functions**: `length()`, `min()`, `max()`, `sum()`
+
+## Roadmap
+
+* Add support for additional functions (e.g., `avg()`, `concat()`).
+* Expand the evaluator for custom user-defined functions.
+* Improve performance for deeply nested JSON data.
+* Add more examples and guides to the documentation.
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a feature branch: git checkout -b feature/my-feature.
+3. Commit your changes: git commit -m "Add my feature".
+4. Push to the branch: git push origin feature/my-feature.
+5. Create a pull request.
+
+Please ensure all tests pass before submitting your pull request:
+
+```bash
+mix test
+```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
