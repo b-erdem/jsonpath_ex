@@ -98,16 +98,16 @@ defmodule JSONPathEx.Parser do
       {:ok, [{:root, "$"}, {:dot_child, "store"}, ...]}
 
       iex> JSONPathEx.Parser.parse("invalid")
-      {:error, "Incorrect value. Expected valid JSONPath expression."}
+      {:error, "Invalid JSONPath expression"}
   """
   def parse(value) do
     case jsonpath(value) do
       {:ok, parsed_value, "", _, _, _} ->
         {:ok, parsed_value}
 
-      {:ok, parsed_value, tail, _, _, _} ->
+      {:ok, _parsed_value, tail, _, _, _} ->
         Logger.warning("Could not parse value completely. Value: #{value}, tail: #{tail}")
-        {:ok, parsed_value}
+        {:error, "Invalid JSONPath expression"}
 
       {:error, message, value_tried, _, _, _} ->
         Logger.error("Could not parse value. Value: #{value_tried}, error: #{message}")
