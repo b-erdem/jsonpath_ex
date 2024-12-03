@@ -1,6 +1,6 @@
-defmodule JsonpathExTest do
+defmodule JJSONPathExTest do
   use ExUnit.Case
-  doctest JsonpathEx
+  doctest JSONPathEx
 
   @example %{
     "store" => %{
@@ -42,10 +42,10 @@ defmodule JsonpathExTest do
 
   test "evaluates JSONPath expression" do
     assert {:ok, ["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]} ==
-             JsonpathEx.evaluate("$.store.book[*].author", @example)
+             JSONPathEx.evaluate("$.store.book[*].author", @example)
 
     assert {:ok, ["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]} ==
-             JsonpathEx.evaluate("$..author", @example)
+             JSONPathEx.evaluate("$..author", @example)
 
     # this is not correct
     assert {:ok,
@@ -79,10 +79,10 @@ defmodule JsonpathExTest do
                   "title" => "The Lord of the Rings"
                 }
               ]
-            }} == JsonpathEx.evaluate("$.store.*", @example)
+            }} == JSONPathEx.evaluate("$.store.*", @example)
 
     assert {:ok, [8.95, 12.99, 8.99, 22.99, 19.95]} ==
-             JsonpathEx.evaluate("$.store..price", @example)
+             JSONPathEx.evaluate("$.store..price", @example)
 
     assert {:ok,
             [
@@ -93,7 +93,7 @@ defmodule JsonpathExTest do
                 "price" => 8.99,
                 "title" => "Moby Dick"
               }
-            ]} == JsonpathEx.evaluate("$..book[2]", @example)
+            ]} == JSONPathEx.evaluate("$..book[2]", @example)
 
     assert {:ok,
             [
@@ -104,7 +104,7 @@ defmodule JsonpathExTest do
                 "price" => 8.99,
                 "title" => "Moby Dick"
               }
-            ]} == JsonpathEx.evaluate("$..book[-2]", @example)
+            ]} == JSONPathEx.evaluate("$..book[-2]", @example)
 
     assert {:ok,
             [
@@ -120,7 +120,7 @@ defmodule JsonpathExTest do
                 "price" => 12.99,
                 "title" => "Sword of Honour"
               }
-            ]} == JsonpathEx.evaluate("$..book[0,1]", @example)
+            ]} == JSONPathEx.evaluate("$..book[0,1]", @example)
 
     assert {:ok,
             [
@@ -136,7 +136,7 @@ defmodule JsonpathExTest do
                 "price" => 12.99,
                 "title" => "Sword of Honour"
               }
-            ]} == JsonpathEx.evaluate("$..book[:2]", @example)
+            ]} == JSONPathEx.evaluate("$..book[:2]", @example)
 
     assert {:ok,
             [
@@ -146,7 +146,7 @@ defmodule JsonpathExTest do
                 "price" => 12.99,
                 "title" => "Sword of Honour"
               }
-            ]} == JsonpathEx.evaluate("$..book[1:2]", @example)
+            ]} == JSONPathEx.evaluate("$..book[1:2]", @example)
 
     assert {:ok,
             [
@@ -164,7 +164,7 @@ defmodule JsonpathExTest do
                 "price" => 22.99,
                 "title" => "The Lord of the Rings"
               }
-            ]} == JsonpathEx.evaluate("$..book[-2:]", @example)
+            ]} == JSONPathEx.evaluate("$..book[-2:]", @example)
 
     assert {:ok,
             [
@@ -182,7 +182,7 @@ defmodule JsonpathExTest do
                 "price" => 22.99,
                 "title" => "The Lord of the Rings"
               }
-            ]} == JsonpathEx.evaluate("$..book[2:]", @example)
+            ]} == JSONPathEx.evaluate("$..book[2:]", @example)
 
     assert {:ok,
             [
@@ -200,7 +200,7 @@ defmodule JsonpathExTest do
                 "price" => 22.99,
                 "title" => "The Lord of the Rings"
               }
-            ]} == JsonpathEx.evaluate("$..book[?(@.isbn)]", @example)
+            ]} == JSONPathEx.evaluate("$..book[?(@.isbn)]", @example)
 
     assert {:ok,
             [
@@ -217,7 +217,7 @@ defmodule JsonpathExTest do
                 "price" => 8.99,
                 "title" => "Moby Dick"
               }
-            ]} == JsonpathEx.evaluate("$.store.book[?(@.price < 10)]", @example)
+            ]} == JSONPathEx.evaluate("$.store.book[?(@.price < 10)]", @example)
 
     assert {:ok,
             [
@@ -234,11 +234,11 @@ defmodule JsonpathExTest do
                 "price" => 8.99,
                 "title" => "Moby Dick"
               }
-            ]} == JsonpathEx.evaluate("$..book[?(@.price <= $['expensive'])]", @example)
+            ]} == JSONPathEx.evaluate("$..book[?(@.price <= $['expensive'])]", @example)
 
     assert {:ok,
             ["value", %{"complex" => "string", "primitives" => [0, 1]}, [0, 1], "string", 1, 0]} ==
-             JsonpathEx.evaluate("$..*", %{
+             JSONPathEx.evaluate("$..*", %{
                "key" => "value",
                "another key" => %{
                  "complex" => "string",
@@ -246,7 +246,7 @@ defmodule JsonpathExTest do
                }
              })
 
-    assert {:ok, 4} == JsonpathEx.evaluate("$..book.length()", @example)
-    # assert {:ok, []} == JsonpathEx.evaluate("$..book[?(@.author =~ /.*REES/i)]", @example)
+    assert {:ok, 4} == JSONPathEx.evaluate("$..book.length()", @example)
+    # assert {:ok, []} == JSONPathEx.evaluate("$..book[?(@.author =~ /.*REES/i)]", @example)
   end
 end

@@ -1,4 +1,4 @@
-defmodule JsonpathEx.Helpers do
+defmodule JSONPathEx.Helpers do
   import NimbleParsec
 
   # Basic parsers

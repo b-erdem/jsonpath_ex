@@ -1,9 +1,9 @@
-defmodule JsonpathEx do
+defmodule JSONPathEx do
   @moduledoc """
   Main interface for JsonpathEx library.
   """
 
-  alias JsonpathEx.{Parser, Evaluator}
+  alias JSONPathEx.{Parser, Evaluator}
 
   @doc """
   Parses and evaluates a JSONPath expression against JSON data.
@@ -22,7 +22,7 @@ defmodule JsonpathEx do
       ...>     ]
       ...>   }
       ...> }
-      iex> JsonpathEx.evaluate("$.store.book[*].title", json_data)
+      iex> JSONPathEx.evaluate("$.store.book[*].title", json_data)
       {:ok, ["Sayings of the Century"]}
   """
   def evaluate(expression, json_data) do

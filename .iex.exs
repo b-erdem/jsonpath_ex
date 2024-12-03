@@ -1,4 +1,4 @@
-alias JsonpathEx.{Parser, Evaluator}
+alias JSONPathEx.{Parser, Evaluator}
 
 example = %{
     "store" => %{

@@ -1,4 +1,4 @@
-defmodule JsonpathEx.Evaluator do
+defmodule JSONPathEx.Evaluator do
   @moduledoc """
   Evaluates JSONPath Abstract Syntax Trees (ASTs) against JSON data.
 

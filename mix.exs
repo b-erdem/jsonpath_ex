@@ -1,4 +1,4 @@
-defmodule JsonpathEx.MixProject do
+defmodule JSONPathEx.MixProject do
   use Mix.Project
 
   def project do

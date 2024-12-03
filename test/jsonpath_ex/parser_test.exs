@@ -1,8 +1,8 @@
-defmodule JsonpathEx.ParserTest do
+defmodule JSONPathEx.ParserTest do
   use ExUnit.Case
-  # doctest JsonpathEx
+  # doctest JSONPathEx
 
-  alias JsonpathEx.Parser
+  alias JSONPathEx.Parser
 
   test "parses jsonpath expressions" do
     assert {:ok, _parsed} = Parser.parse("$[1:3]")

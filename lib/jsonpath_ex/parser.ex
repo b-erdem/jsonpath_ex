@@ -1,4 +1,4 @@
-defmodule JsonpathEx.Parser do
+defmodule JSONPathEx.Parser do
   @moduledoc """
   Defines parsers for JSONPath expressions using NimbleParsec.
 
@@ -9,7 +9,7 @@ defmodule JsonpathEx.Parser do
 
   require Logger
   import NimbleParsec
-  alias JsonpathEx.Helpers
+  alias JSONPathEx.Helpers
 
   @doc """
   Parses a JSONPath expression.
@@ -94,10 +94,10 @@ defmodule JsonpathEx.Parser do
 
   ## Examples
 
-      iex> JsonpathEx.Parser.parse("$.store.book[*].author")
+      iex> JSONPathEx.Parser.parse("$.store.book[*].author")
       {:ok, [{:root, "$"}, {:dot_child, "store"}, ...]}
 
-      iex> JsonpathEx.Parser.parse("invalid")
+      iex> JSONPathEx.Parser.parse("invalid")
       {:error, "Incorrect value. Expected valid JSONPath expression."}
   """
   def parse(value) do

@@ -1,4 +1,4 @@
-# JsonpathEx
+# JSONPathEx
 
 [![Elixir](https://img.shields.io/badge/elixir-~%3E%201.14-purple.svg)](https://elixir-lang.org/)  
 A powerful and flexible Elixir library for parsing, evaluating, and navigating JSON data using [JSONPath](https://goessner.net/articles/JsonPath/).
@@ -36,7 +36,7 @@ mix deps.get
 
 ### Evaluating JSONPath Expressions
 
-The `JsonpathEx` module provides a convenient evaluate/2 function to parse and evaluate a JSONPath expression in one step:
+The `JSONPathEx` module provides a convenient evaluate/2 function to parse and evaluate a JSONPath expression in one step:
 
 ```elixir
 iex> json_data = %{
@@ -51,22 +51,22 @@ iex> json_data = %{
 ...>     ]
 ...>   }
 ...> }
-iex> JsonpathEx.evaluate("$.store.book[*].title", json_data)
+iex> JSONPathEx.evaluate("$.store.book[*].title", json_data)
 {:ok, ["Sayings of the Century"]}
 ```
 
 ### Parsing JSONPath Expressions
 
-Use the `JsonpathEx.Parser` module to parse a JSONPath string into an Abstract Syntax Tree (AST):
+Use the `JSONPathEx.Parser` module to parse a JSONPath string into an Abstract Syntax Tree (AST):
 
 ```elixir
-iex> JsonpathEx.Parser.parse("$.store.book[*].author")
+iex> JSONPathEx.Parser.parse("$.store.book[*].author")
 {:ok, [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]}
 ```
 
 ### Evaluating JSONPath Expressions
 
-Use the `JsonpathEx.Evaluator` module to evaluate a JSONPath AST against JSON data:
+Use the `JSONPathEx.Evaluator` module to evaluate a JSONPath AST against JSON data:
 
 ```elixir
 iex> ast = [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]
@@ -78,13 +78,13 @@ iex> json = %{
 ...>     ]
 ...>   }
 ...> }
-iex> JsonpathEx.Evaluator.evaluate(ast, json)
+iex> JSONPathEx.Evaluator.evaluate(ast, json)
 ["Author 1", "Author 2"]
 ```
 
 ### Evaluating JSONPath ASTs
 
-Use the JsonpathEx.Evaluator module to evaluate a JSONPath AST against JSON data:
+Use the JSONPathEx.Evaluator module to evaluate a JSONPath AST against JSON data:
 
 ```elixir
 iex> ast = [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]
@@ -96,7 +96,7 @@ iex> json = %{
 ...>     ]
 ...>   }
 ...> }
-iex> JsonpathEx.Evaluator.evaluate(ast, json)
+iex> JSONPathEx.Evaluator.evaluate(ast, json)
 ["Author 1", "Author 2"]
 ```
 
