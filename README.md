@@ -1,6 +1,8 @@
 # JSONPathEx
 
-[![Elixir](https://img.shields.io/badge/elixir-~%3E%201.14-purple.svg)](https://elixir-lang.org/)  
+[![Elixir](https://img.shields.io/badge/elixir-~%3E%201.14-purple.svg)](https://elixir-lang.org/)
+[![Module Version](https://img.shields.io/hexpm/v/jsonpath_ex.svg)](https://hex.pm/packages/jsonpath_ex)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/jsonpath_ex)
 A powerful and flexible Elixir library for parsing, evaluating, and navigating JSON data using [JSONPath](https://goessner.net/articles/JsonPath/).
 
 ---
