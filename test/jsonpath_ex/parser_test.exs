@@ -1,244 +1,250 @@
 defmodule JSONPathEx.ParserTest do
   use ExUnit.Case
-  # doctest JSONPathEx
 
   alias JSONPathEx.Parser
 
-  test "parses jsonpath expressions" do
-    assert {:ok, _parsed} = Parser.parse("$[1:3]")
-    assert {:ok, _parsed} = Parser.parse("$[0:5]")
-    assert {:ok, _parsed} = Parser.parse("$[7:10]")
-    assert {:ok, _parsed} = Parser.parse("$[1:3]")
-    assert {:ok, _parsed} = Parser.parse("$[1:10]")
-    assert {:ok, _parsed} = Parser.parse("$[2:113667776004]")
-    assert {:ok, _parsed} = Parser.parse("$[2:-113667776004:-1]")
-    assert {:ok, _parsed} = Parser.parse("$[-113667776004:2]")
-    assert {:ok, _parsed} = Parser.parse("$[113667776004:2:-1]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:-5]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:-4]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:-3]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:1]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:2]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:3]")
-    assert {:ok, _parsed} = Parser.parse("$[3:0:-2]")
-    assert {:ok, _parsed} = Parser.parse("$[7:3:-1]")
-    assert {:ok, _parsed} = Parser.parse("$[0:3:-2]")
-    assert {:ok, _parsed} = Parser.parse("$[::-2]")
-    assert {:ok, _parsed} = Parser.parse("$[1:]")
-    assert {:ok, _parsed} = Parser.parse("$[3::-1]")
-    assert {:ok, _parsed} = Parser.parse("$[:2]")
-    assert {:ok, _parsed} = Parser.parse("$[:]")
-    assert {:ok, _parsed} = Parser.parse("$[:]")
-    assert {:ok, _parsed} = Parser.parse("$[::]")
-    assert {:ok, _parsed} = Parser.parse("$[:2:-1]")
-    assert {:ok, _parsed} = Parser.parse("$[3:-4]")
-    assert {:ok, _parsed} = Parser.parse("$[3:-3]")
-    assert {:ok, _parsed} = Parser.parse("$[3:-2]")
-    assert {:ok, _parsed} = Parser.parse("$[2:1]")
-    assert {:ok, _parsed} = Parser.parse("$[0:0]")
-    assert {:ok, _parsed} = Parser.parse("$[0:1]")
-    assert {:ok, _parsed} = Parser.parse("$[-1:]")
-    assert {:ok, _parsed} = Parser.parse("$[-2:]")
-    assert {:ok, _parsed} = Parser.parse("$[-4:]")
-    assert {:ok, _parsed} = Parser.parse("$[0:3:2]")
-    assert {:ok, _parsed} = Parser.parse("$[0:3:0]")
-    assert {:ok, _parsed} = Parser.parse("$[0:3:1]")
-    assert {:ok, _parsed} = Parser.parse("$[010:024:010]")
-    assert {:ok, _parsed} = Parser.parse("$[0:4:2]")
-    assert {:ok, _parsed} = Parser.parse("$[1:3:]")
-    assert {:ok, _parsed} = Parser.parse("$[::2]")
-    assert {:ok, _parsed} = Parser.parse("$['key']")
-    assert {:ok, _parsed} = Parser.parse("$['missing']")
-    assert {:ok, _parsed} = Parser.parse("$..[0]")
-    # assert {:ok, _parsed} = Parser.parse("$['ü']")
-    assert {:ok, _parsed} = Parser.parse("$['two.some']")
-    assert {:ok, _parsed} = Parser.parse("$[\"key\"]")
-    # assert {:ok, _parsed} = Parser.parse("$[]")
-    # assert {:ok, _parsed} = Parser.parse("$['']")
-    # assert {:ok, _parsed} = Parser.parse("$[\"\"]")
-    assert {:ok, _parsed} = Parser.parse("$[-2]")
-    assert {:ok, _parsed} = Parser.parse("$[2]")
-    assert {:ok, _parsed} = Parser.parse("$[0]")
-    assert {:ok, _parsed} = Parser.parse("$[1]")
-    assert {:ok, _parsed} = Parser.parse("$[1]")
-    # assert {:ok, _parsed} = Parser.parse("$.*[1]")
-    assert {:ok, _parsed} = Parser.parse("$[-1]")
-    # assert {:ok, _parsed} = Parser.parse("$[':']")
-    # assert {:ok, _parsed} = Parser.parse("$[']']")
-    assert {:ok, _parsed} = Parser.parse("$['@']")
-    assert {:ok, _parsed} = Parser.parse("$['.']")
-    # assert {:ok, _parsed} = Parser.parse("$['.*']")
-    # assert {:ok, _parsed} = Parser.parse("$['\"']")
-    # assert {:ok, _parsed} = Parser.parse("$['*']")
-    # assert {:ok, _parsed} = Parser.parse("$['\\']")
-    # assert {:ok, _parsed} = Parser.parse("$['\'']")
-    assert {:ok, _parsed} = Parser.parse("$['0']")
-    # assert {:ok, _parsed} = Parser.parse("$['$']")
-    # assert {:ok, _parsed} = Parser.parse("$[':@.\"$,*\'\\']")
-    # assert {:ok, _parsed} = Parser.parse("$['single'quote']")
-    # assert {:ok, _parsed} = Parser.parse("$[',']")
-    # assert {:ok, _parsed} = Parser.parse("$[ 'a' ]")
-    # assert {:ok, _parsed} = Parser.parse("$['ni.*']")
-    # assert {:ok, _parsed} = Parser.parse("$['two'.'some']")
-    assert {:ok, _parsed} = Parser.parse("$[two.some]")
-    assert {:ok, _parsed} = Parser.parse("$[*]")
-    assert {:ok, _parsed} = Parser.parse("$[0:2][*]")
-    assert {:ok, _parsed} = Parser.parse("$[*].bar[*]")
-    assert {:ok, _parsed} = Parser.parse("$..[*]")
-    assert {:ok, _parsed} = Parser.parse("$[key]")
-    # assert {:ok, _parsed} = Parser.parse("@.a")
-    assert {:ok, _parsed} = Parser.parse("$.['key']")
-    assert {:ok, _parsed} = Parser.parse("$.[\"key\"]")
-    assert {:ok, _parsed} = Parser.parse("$.[key]")
-    assert {:ok, _parsed} = Parser.parse("$.key")
-    assert {:ok, _parsed} = Parser.parse("$.id")
-    assert {:ok, _parsed} = Parser.parse("$[0:2].key")
-    assert {:ok, _parsed} = Parser.parse("$..[1].key")
-    assert {:ok, _parsed} = Parser.parse("$[*].a")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.id==42)].name")
-    assert {:ok, _parsed} = Parser.parse("$..key")
-    assert {:ok, _parsed} = Parser.parse("$.store..price")
-    assert {:ok, _parsed} = Parser.parse("$...key")
-    assert {:ok, _parsed} = Parser.parse("$[0,2].key")
-    assert {:ok, _parsed} = Parser.parse("$['one','three'].key")
-    assert {:ok, _parsed} = Parser.parse("$.key-dash")
-    # assert {:ok, _parsed} = Parser.parse("$.\"key\"")
-    # assert {:ok, _parsed} = Parser.parse("$..\"key\"")
-    # assert {:ok, _parsed} = Parser.parse("$.")
-    # assert {:ok, _parsed} = Parser.parse("$.in")
-    # assert {:ok, _parsed} = Parser.parse("$.length")
-    # assert {:ok, _parsed} = Parser.parse("$.null")
-    # assert {:ok, _parsed} = Parser.parse("$.true")
-    # assert {:ok, _parsed} = Parser.parse("$.$")
-    # assert {:ok, _parsed} = Parser.parse("$.屬性")
-    # assert {:ok, _parsed} = Parser.parse("$.2")
-    # assert {:ok, _parsed} = Parser.parse("$.-1")
-    # assert {:ok, _parsed} = Parser.parse("$.'key'")
-    # assert {:ok, _parsed} = Parser.parse("$..'key'")
-    # assert {:ok, _parsed} = Parser.parse("$. a")
-    assert {:ok, _parsed} = Parser.parse("$.*")
-    assert {:ok, _parsed} = Parser.parse("$.*.bar.*")
-    assert {:ok, _parsed} = Parser.parse("$.*.*")
-    assert {:ok, _parsed} = Parser.parse("$..*")
-    # assert {:ok, _parsed} = Parser.parse("$a")
-    # assert {:ok, _parsed} = Parser.parse(".key")
-    # assert {:ok, _parsed} = Parser.parse("key")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key)]")
-    assert {:ok, _parsed} = Parser.parse("$..*[?(@.id>2)]")
-    assert {:ok, _parsed} = Parser.parse("$..[?(@.id==2)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key+50==100)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>42 && @.key<44)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>0 && false)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>0 && true)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>43 || @.key<43)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>0 || false)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>0 || true)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@['key']==42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@['@key']==42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@[-1]==2)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@[1]=='b')]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.a && (@.b || @.c))]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.a && @.b || @.c)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key/10==5)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key-dash == 'value')]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.2 == 'second')]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@==42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.id==2)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.d==[\"v1\",\"v2\"])]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@[0:1]==[1])]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.*==[1,2])]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.d==[\"v1\",\"v2\"] || (@.d == true))]")
+  # ---------------------------------------------------------------------------
+  # Slices — all valid slice forms
+  # ---------------------------------------------------------------------------
+  test "parses slice expressions" do
+    slices = [
+      "$[1:3]", "$[0:5]", "$[7:10]", "$[1:10]",
+      "$[2:113667776004]", "$[2:-113667776004:-1]",
+      "$[-113667776004:2]", "$[113667776004:2:-1]",
+      "$[-4:-5]", "$[-4:-4]", "$[-4:-3]",
+      "$[-4:1]", "$[-4:2]", "$[-4:3]",
+      "$[3:0:-2]", "$[7:3:-1]", "$[0:3:-2]",
+      "$[::-2]", "$[1:]", "$[3::-1]", "$[:2]",
+      "$[:]", "$[::]", "$[:2:-1]",
+      "$[3:-4]", "$[3:-3]", "$[3:-2]",
+      "$[2:1]", "$[0:0]", "$[0:1]",
+      "$[-1:]", "$[-2:]", "$[-4:]",
+      "$[0:3:2]", "$[0:3:0]", "$[0:3:1]",
+      "$[010:024:010]", "$[0:4:2]",
+      "$[1:3:]", "$[::2]"
+    ]
+    Enum.each(slices, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    assert {:ok, _parsed} = Parser.parse("$[?(@.d==['v1','v2'])]")
-    assert {:ok, _parsed} = Parser.parse("$[?((@.key<44)==false)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==false)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==null)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@[0:1]==1)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@[*]==2)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.*==2)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.key==-0.123e2)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==010)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.d=={\"k\":\"v\"})]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==\"value\")]")
-    # assert {:ok, _parsed} = Parser.parse("$[?()]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.key==\"Motörhead\")]")
-    assert {:ok, _parsed} =
-             Parser.parse("$[?(@.key==\"hi@example.com\")]")
+  # ---------------------------------------------------------------------------
+  # Bracket-notated keys — including special characters
+  # ---------------------------------------------------------------------------
+  test "parses bracket keys" do
+    keys = [
+      "$['key']", "$['missing']", "$['two.some']", "$[\"key\"]",
+      "$['']", "$[\"\"]",                      # empty string keys
+      "$[':']", "$[']']", "$['@']", "$['.']",  # punctuation
+      "$['.*']", "$['\"']", "$['*']",          # glob-like content
+      "$['0']", "$['$']", "$[',']",            # digits and sigils
+      "$[ 'a' ]",                              # whitespace tolerance
+      "$['ni.*']", "$['key with spaces']",     # spaces / globs
+      "$['ü']",                                # unicode
+      "$[two.some]", "$[key]",                 # unquoted (field_name)
+      "$['it\\'s']", "$['back\\\\slash']",     # escape sequences
+      "$[\"quo\\\"ted\"]"                      # escaped double-quote
+    ]
+    Enum.each(keys, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==\"some.value\")]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key=='value')]")
+  # ---------------------------------------------------------------------------
+  # Array indices and multi-index
+  # ---------------------------------------------------------------------------
+  test "parses array indices" do
+    indices = [
+      "$[-2]", "$[2]", "$[0]", "$[1]", "$[-1]",
+      "$[0,1]", "$[0,0]", "$[4,1]",
+      "$[ 0 , 1 ]",                            # whitespace tolerance
+      "$['a','a']", "$['key','another']", "$['missing','key']",
+      "$[:]['c','d']", "$[0]['c','d']", "$.*['c','d']", "$..['c','d']"
+    ]
+    Enum.each(indices, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.key==\"Mot\u00f6rhead\")]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key==true)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key1==@.key2)]")
-    assert {:ok, _parsed} = Parser.parse("$.items[?(@.key==$.value)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>=42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key>\"VALUE\")]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.d in [2, 3])]")
-    assert {:ok, _parsed} = Parser.parse("$[?(2 in @.d)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(length(@) == 4)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.length() == 4)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.length == 4)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key<42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key<=42)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.key='value')]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key*2==100)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(!(@.key==42))]")
-    assert {:ok, _parsed} = Parser.parse("$[?(!(@.d==[\"v1\",\"v2\"]) || (@.d == true))]")
-    assert {:ok, _parsed} = Parser.parse("$[?(!(@.key<42))]")
-    assert {:ok, _parsed} = Parser.parse("$[?(!@.key)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.a.*)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key!=42)]")
+  # ---------------------------------------------------------------------------
+  # Wildcards and deep scan
+  # ---------------------------------------------------------------------------
+  test "parses wildcards and deep scan" do
+    exprs = [
+      "$[*]", "$[0:2][*]", "$[*].bar[*]", "$..[*]",
+      "$.*", "$.*.bar.*", "$.*.*", "$..*",
+      "$..*[?(@.id>2)]", "$..[?(@.id==2)]",
+      "$.*[1]", "$.*[?(@.key)]",
+      "$..", "$..*", "$.key.."
+    ]
+    Enum.each(exprs, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    assert {:ok, _parsed} =
-             Parser.parse("$[?((@.d!=[\"v1\",\"v2\"]) || (@.d == true))]")
+  # ---------------------------------------------------------------------------
+  # Dot-notated keys — including keyword-like names
+  # ---------------------------------------------------------------------------
+  test "parses dot children" do
+    exprs = [
+      "$.key", "$.id", "$[0:2].key", "$..[1].key",
+      "$[*].a", "$[0,2].key", "$['one','three'].key",
+      "$.key-dash",     # hyphen in key
+      "$.in",           # reserved word as key
+      "$.length",       # function name as key
+      "$.null",         # null as key name
+      "$.true",         # true as key name
+      "$.2",            # numeric key
+      "$.-1",           # hyphen-numeric key
+      "$.$",            # dollar sign as key
+      "$.\"key\"",      # double-quoted dot-child
+      "$.'key'",        # single-quoted dot-child
+      "$.\"key with spaces\"",  # quoted with spaces
+      "$..'key'",       # deep-scan single-quoted
+      "$..\"key\""      # deep-scan double-quoted
+    ]
+    Enum.each(exprs, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    assert {:ok, _parsed} = Parser.parse("$[*].bookmarks[?(@.page == 45)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.name=~/hello.*/)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.name=~/@.pattern/)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@[*]>=4)]")
-    # assert {:ok, _parsed} = Parser.parse("$.x[?(@[*]>=$.y[*])]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.key=42)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.a[?(@.price>10)])]")
+  # ---------------------------------------------------------------------------
+  # Dot + bracket hybrid
+  # ---------------------------------------------------------------------------
+  test "parses dot-bracket hybrids" do
+    exprs = [
+      "$.['key']", "$.[ \"key\" ]", "$.[key]",
+      "$...key"   # triple-dot normalises to deep scan + key
+    ]
+    Enum.each(exprs, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    assert {:ok, _parsed} =
-             Parser.parse("$[?(@.address.city=='Berlin')]")
+  # ---------------------------------------------------------------------------
+  # Deep-scan key + chained selectors
+  # ---------------------------------------------------------------------------
+  test "parses deep-scan + chained selectors" do
+    exprs = [
+      "$.store..price",
+      "$..key",
+      "$..['c','d']",
+      "$[?(@.id==42)].name",
+      "$.items[?(@.key==$.value)]"
+    ]
+    Enum.each(exprs, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
 
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key-50==-100)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(1==1)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key===42)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key)]")
-    assert {:ok, _parsed} = Parser.parse("$.*[?(@.key)]")
-    assert {:ok, _parsed} = Parser.parse("$..[?(@.id)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(false)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@..child)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?(null)]")
-    assert {:ok, _parsed} = Parser.parse("$[?(true)]")
-    # assert {:ok, _parsed} = Parser.parse("$[?@.key==42]")
-    assert {:ok, _parsed} = Parser.parse("$[?(@.key)]")
-    assert {:ok, _parsed} = Parser.parse("$.data.sum()")
-    # assert {:ok, _parsed} = Parser.parse("$(key,more)")
-    assert {:ok, _parsed} = Parser.parse("$..")
-    assert {:ok, _parsed} = Parser.parse("$..*")
-    assert {:ok, _parsed} = Parser.parse("$.key..")
-    # assert {:ok, _parsed} = Parser.parse("$[(@.length-1)]")
-    assert {:ok, _parsed} = Parser.parse("$[0,1]")
-    assert {:ok, _parsed} = Parser.parse("$[0,0]")
-    assert {:ok, _parsed} = Parser.parse("$['a','a']")
-    # assert {:ok, _parsed} = Parser.parse("$[?(@.key<3),?(@.key>6)]")
-    assert {:ok, _parsed} = Parser.parse("$['key','another']")
-    assert {:ok, _parsed} = Parser.parse("$['missing','key']")
-    assert {:ok, _parsed} = Parser.parse("$[:]['c','d']")
-    assert {:ok, _parsed} = Parser.parse("$[0]['c','d']")
-    assert {:ok, _parsed} = Parser.parse("$.*['c','d']")
-    assert {:ok, _parsed} = Parser.parse("$..['c','d']")
-    assert {:ok, _parsed} = Parser.parse("$[4,1]")
-    # assert {:ok, _parsed} = Parser.parse("$.*[0,:5]")
-    # assert {:ok, _parsed} = Parser.parse("$[1:3,4]")
-    # assert {:ok, _parsed} = Parser.parse("$[ 0 , 1 ]")
-    # assert {:ok, _parsed} = Parser.parse("$[*,1]")
+  # ---------------------------------------------------------------------------
+  # Functions
+  # ---------------------------------------------------------------------------
+  test "parses function calls" do
+    exprs = [
+      "$.data.sum()",
+      "$.data.length()",
+      "$.data.min()",
+      "$.data.max()",
+      "$.data.avg()",
+      "$.data.concat()"
+    ]
+    Enum.each(exprs, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Filters — operators, logic, arithmetic, grouping
+  # ---------------------------------------------------------------------------
+  test "parses filter expressions" do
+    exprs = [
+      # existence
+      "$[?(@.key)]", "$[?(!@.key)]", "$[?(@)]",
+      # comparison
+      "$[?(@.key==42)]", "$[?(@.key!=42)]",
+      "$[?(@.key>42)]", "$[?(@.key>=42)]",
+      "$[?(@.key<42)]", "$[?(@.key<=42)]",
+      "$[?(@.key===42)]",
+      "$[?(@.key==true)]", "$[?(@.key==false)]", "$[?(@.key==null)]",
+      "$[?(@.key==\"value\")]", "$[?(@.key=='value')]",
+      "$[?(@.key==\"hi@example.com\")]", "$[?(@.key==\"some.value\")]",
+      "$[?(@.key==\"Motörhead\")]",
+      "$[?(@.key>\"VALUE\")]",
+      "$[?(@.key==010)]",
+      # logical
+      "$[?(@.key>42 && @.key<44)]",
+      "$[?(@.key>0 && false)]", "$[?(@.key>0 && true)]",
+      "$[?(@.key>43 || @.key<43)]",
+      "$[?(@.key>0 || false)]", "$[?(@.key>0 || true)]",
+      "$[?(@.a && (@.b || @.c))]",
+      "$[?(@.a && @.b || @.c)]",
+      # negated grouping
+      "$[?(!(@.key==42))]", "$[?(!(@.key<42))]",
+      "$[?(!(@.d==[\"v1\",\"v2\"]) || (@.d == true))]",
+      # arithmetic
+      "$[?(@.key+50==100)]", "$[?(@.key-50==-100)]",
+      "$[?(@.key/10==5)]", "$[?(@.key*2==100)]",
+      # in / nin
+      "$[?(@.d in [2, 3])]", "$[?(2 in @.d)]",
+      # list comparison
+      "$[?(@.d==[\"v1\",\"v2\"])]", "$[?(@.d==['v1','v2'])]",
+      "$[?(@[0:1]==[1])]", "$[?(@.*==[1,2])]",
+      "$[?(@.d==[\"v1\",\"v2\"] || (@.d == true))]",
+      "$[?((@.d!=[\"v1\",\"v2\"]) || (@.d == true))]",
+      # bracket path in filter
+      "$[?(@['key']==42)]", "$[?(@['@key']==42)]",
+      "$[?(@[-1]==2)]", "$[?(@[1]=='b')]",
+      "$[?(@[0:1]==1)]", "$[?(@[*]==2)]", "$[?(@.*==2)]",
+      # key with dash (parsed as key name, not subtraction)
+      "$[?(@.key-dash == 'value')]",
+      # numeric-start key in filter path
+      "$[?(@.2 == 'second')]",
+      # nested dot path
+      "$[?(@.address.city=='Berlin')]",
+      # root reference in filter
+      "$.items[?(@.key==$.value)]",
+      # cross-context comparison
+      "$[?(@.key1==@.key2)]",
+      # boolean / null literals
+      "$[?((@.key<44)==false)]",
+      # grouping with comparison result
+      "$[?(1==1)]",
+      # deep scan inside filter operand
+      "$[?(@..child)]",
+      # bare boolean / null filter
+      "$[?(true)]", "$[?(false)]", "$[?(null)]",
+      # shorthand filter (no parens)
+      "$[?@.key==42]",
+      # function in filter
+      "$[?(@.length() == 4)]",
+      # length as key (not function)
+      "$[?(@.length == 4)]",
+      # chained after filter
+      "$[?(@.id==42)].name",
+      "$[*].bookmarks[?(@.page == 45)]",
+      # nested filter (filter inside a filter operand path)
+      "$[?(@.tags[?(@.name == \"important\")])]",
+      "$[?(@.items[?(@.price > 10)])]",
+      # root ref with array wildcard in filter operand (valid since root_key supports arrays)
+      "$.x[?(@[*]>=$.y[*])]"
+    ]
+    Enum.each(exprs, fn expr -> assert {:ok, _} = Parser.parse(expr), expr end)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Expressions that are deliberately invalid / unsupported → must error
+  # ---------------------------------------------------------------------------
+  test "rejects invalid expressions" do
+    invalid = [
+      # no root selector
+      ".key", "key", "$a",
+      # empty brackets
+      "$[]",
+      # space after dot (no whitespace tolerance in dot-child)
+      "$. a",
+      # computed array index not supported
+      "$[(@.length-1)]",
+      # multiple comma-separated filters not supported
+      "$[?(@.key<3),?(@.key>6)]",
+      # mixed slice+index / wildcard+index in one bracket
+      "$[1:3,4]", "$.*[0,:5]", "$[*,1]",
+      # single = (assignment, not comparison)
+      "$[?(@.key='value')]", "$[?(@.key=42)]",
+
+      # ---------------------------------------------------------------------------
+      # Valid RFC 9535 — not yet supported by this parser
+      # ---------------------------------------------------------------------------
+      "$.屬性",                  # unicode member names in dot notation
+      "$[?(@.key==-0.123e2)]",  # scientific-notation floats
+      "$[?(length(@) == 4)]"    # prefix-style function calls
+    ]
+    Enum.each(invalid, fn expr ->
+      assert {:error, _} = Parser.parse(expr), "expected error for: #{expr}"
+    end)
   end
 end

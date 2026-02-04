@@ -1,6 +1,6 @@
 # JSONPathEx
 
-[![Elixir](https://img.shields.io/badge/elixir-~%3E%201.14-purple.svg)](https://elixir-lang.org/)
+[![Elixir](https://img.shields.io/badge/elixir-~%3E%201.15-purple.svg)](https://elixir-lang.org/)
 [![Module Version](https://img.shields.io/hexpm/v/jsonpath_ex.svg)](https://hex.pm/packages/jsonpath_ex)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/jsonpath_ex)
 
@@ -60,37 +60,19 @@ iex> JSONPathEx.evaluate("$.store.book[*].title", json_data)
 
 ### Parsing JSONPath Expressions
 
-Use the `JSONPathEx.Parser` module to parse a JSONPath string into an Abstract Syntax Tree (AST):
+Use `JSONPathEx.parse/1` to parse a JSONPath string into an Abstract Syntax Tree (AST):
 
 ```elixir
-iex> JSONPathEx.Parser.parse("$.store.book[*].author")
-{:ok, [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]}
+iex> JSONPathEx.parse("$.store.book[*].author")
+{:ok, [root: "$", dot_child: ["store"], dot_child: ["book"], array: [array_wildcard: {:wildcard, "*"}], dot_child: ["author"]]}
 ```
 
-### Evaluating JSONPath Expressions
+### Evaluating ASTs Directly
 
-Use the `JSONPathEx.Evaluator` module to evaluate a JSONPath AST against JSON data:
-
-```elixir
-iex> ast = [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]
-iex> json = %{
-...>   "store" => %{
-...>     "book" => [
-...>       %{"author" => "Author 1"},
-...>       %{"author" => "Author 2"}
-...>     ]
-...>   }
-...> }
-iex> JSONPathEx.Evaluator.evaluate(ast, json)
-["Author 1", "Author 2"]
-```
-
-### Evaluating JSONPath ASTs
-
-Use the JSONPathEx.Evaluator module to evaluate a JSONPath AST against JSON data:
+You can also parse and evaluate separately using `JSONPathEx.Parser` and `JSONPathEx.Evaluator`:
 
 ```elixir
-iex> ast = [{:root, "$"}, {:dot_child, "store"}, {:dot_child, "book"}, {:wildcard, "*"}, {:dot_child, "author"}]
+iex> {:ok, ast} = JSONPathEx.Parser.parse("$.store.book[*].author")
 iex> json = %{
 ...>   "store" => %{
 ...>     "book" => [
@@ -113,14 +95,11 @@ iex> JSONPathEx.Evaluator.evaluate(ast, json)
 - **Recursive Descent** (`..`)
 - **Array Slicing** (`[start:end:step]`)
 - **Filters** (`[?(@.key < 10)]`)
-- **Functions**: `length()`, `min()`, `max()`, `sum()`
-
-## Roadmap
-
-* Add support for additional functions (e.g., `avg()`, `concat()`).
-* Expand the evaluator for custom user-defined functions.
-* Improve performance for deeply nested JSON data.
-* Add more examples and guides to the documentation.
+- **Functions**: `length()`, `min()`, `max()`, `sum()`, `avg()`, `concat()`
+- **Shorthand filters** (`[?@.key == 42]` without extra parentheses)
+- **Escape sequences** in quoted keys (`\'`, `\"`, `\\`)
+- **Quoted dot-child** (`$."key"`, `$..'key'`)
+- **Nested filters** (`$[?(@.tags[?(@.name == "important")])]`)
 
 ## Contributing
 

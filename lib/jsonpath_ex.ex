@@ -10,7 +10,9 @@ defmodule JSONPathEx do
 
   - Parse JSONPath expressions into Abstract Syntax Trees (ASTs).
   - Evaluate JSONPath expressions or ASTs against JSON data.
-  - Supports filters, recursive descent, array slicing, and built-in functions.
+  - Supports filters, recursive descent, array slicing, logical operators,
+    arithmetic, `in`/`nin`, nested filters, shorthand filter syntax (`[?expr]`),
+    escape sequences in quoted keys, quoted dot-child, and built-in functions.
 
   ## Examples
 
@@ -64,7 +66,7 @@ defmodule JSONPathEx do
   ## Notes
 
   - This function ensures that both parsing and evaluation are performed in sequence.
-  - For debugging purposes, consider using `JsonpathEx.Parser` and `JsonpathEx.Evaluator` separately.
+  - For debugging purposes, consider using `JSONPathEx.Parser` and `JSONPathEx.Evaluator` separately.
   """
   def evaluate(expression, json_data) do
     with {:ok, parsed} <- Parser.parse(expression) do

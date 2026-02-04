@@ -11,7 +11,7 @@ defmodule JSONPathEx.Helpers do
   def colon, do: string(":") |> unwrap_and_tag(:colon)
   def dot_wildcard, do: string(".*") |> unwrap_and_tag(:dot_wildcard)
   def deep_scan_wildcard, do: string("..*") |> unwrap_and_tag(:deep_scan_wildcard)
-  def null, do: string("null") |> unwrap_and_tag(:null)
+  def null, do: string("null") |> replace(nil)
   def single_quote, do: string("'") |> unwrap_and_tag(:single_quote)
   def double_quote, do: string("\"") |> unwrap_and_tag(:double_quote)
 
@@ -28,7 +28,8 @@ defmodule JSONPathEx.Helpers do
   def true_, do: string("true") |> replace(true)
   def false_, do: string("false") |> replace(false)
 
-  def boolean, do: choice([true_(), false_()]) |> unwrap_and_tag(:boolean)
+  # Raw true/false — no tag wrapper; value() will tag as {:value, true/false}
+  def boolean, do: choice([true_(), false_()])
 
   def eq, do: string("==") |> replace(:==)
   def gt, do: string(">") |> replace(:>)
@@ -64,14 +65,22 @@ defmodule JSONPathEx.Helpers do
   def min_, do: string("min()") |> replace(:min)
   def max_, do: string("max()") |> replace(:max)
   def sum_, do: string("sum()") |> replace(:sum)
+  def avg_, do: string("avg()") |> replace(:avg)
+  def concat_, do: string("concat()") |> replace(:concat)
 
   def function,
-    do: ignore(dot()) |> choice([length_(), min_(), max_(), sum_()]) |> unwrap_and_tag(:function)
+    do:
+      ignore(dot())
+      |> choice([length_(), min_(), max_(), sum_(), avg_(), concat_()])
+      |> unwrap_and_tag(:function)
 
+  # Whitespace-tolerant array indices: $[ 0 , 1 ]
   def array_indices,
     do:
-      numeric_index()
-      |> repeat(ignore(comma()) |> concat(numeric_index()), min: 1)
+      whitespace()
+      |> concat(numeric_index())
+      |> repeat(whitespace() |> ignore(comma()) |> whitespace() |> concat(numeric_index()), min: 1)
+      |> whitespace()
       |> tag(:array_indices)
 
   def array_wildcard, do: wildcard() |> unwrap_and_tag(:array_wildcard)
@@ -99,39 +108,61 @@ defmodule JSONPathEx.Helpers do
   def whitespace(combinator), do: concat(combinator, whitespace())
   def whitespace, do: ignore(optional(utf8_string([?\s], min: 0)))
 
+  # Single-quoted string with escape support: \' and \\
   def single_quoted_string,
     do:
       ignore(single_quote())
-      |> utf8_string(all_chars(), min: 1)
+      |> repeat(
+        choice([
+          string("\\'") |> replace("'"),
+          string("\\\\") |> replace("\\"),
+          utf8_string([0..0x26, 0x28..0x5B, 0x5D..0x10FFFF], min: 1)
+        ])
+      )
       |> ignore(single_quote())
+      |> reduce({__MODULE__, :join_strings, []})
 
+  # Double-quoted string with escape support: \" and \\
   def double_quoted_string,
     do:
       ignore(double_quote())
-      |> utf8_string(all_chars(), min: 1)
+      |> repeat(
+        choice([
+          string("\\\"") |> replace("\""),
+          string("\\\\") |> replace("\\"),
+          utf8_string([0..0x21, 0x23..0x5B, 0x5D..0x10FFFF], min: 1)
+        ])
+      )
       |> ignore(double_quote())
+      |> reduce({__MODULE__, :join_strings, []})
 
-  # Dot-notated child
+  # Dot-notated child (plain, quoted, wildcard, deep-scan variants)
   def dot_child,
     do:
       choice([
-        ignore(dot())
-        |> concat(utf8_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-], min: 1))
-        |> lookahead_not(left_paren()),
-        deep_scan()
-        |> concat(utf8_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-], min: 1))
-        |> lookahead_not(left_paren()),
         dot_wildcard(),
-        deep_scan_wildcard()
+        deep_scan_wildcard(),
+        deep_scan()
+        |> concat(choice([single_quoted_string(), double_quoted_string()])),
+        ignore(dot())
+        |> concat(choice([single_quoted_string(), double_quoted_string()])),
+        deep_scan()
+        |> concat(utf8_string([?a..?z, ?A..?Z, ?0..?9, ?$, ?_, ?-], min: 1))
+        |> lookahead_not(left_paren()),
+        ignore(dot())
+        |> concat(utf8_string([?a..?z, ?A..?Z, ?0..?9, ?$, ?_, ?-], min: 1))
+        |> lookahead_not(left_paren())
       ])
       |> tag(:dot_child)
 
-  # Bracket-notated child or children
+  # Bracket-notated child or children — whitespace-tolerant: $[ 'a' , 'b' ]
   def bracket_child,
     do:
       ignore(left_bracket())
+      |> whitespace()
       |> concat(quoted_key())
-      |> repeat(ignore(comma()) |> concat(quoted_key()))
+      |> repeat(whitespace() |> ignore(comma()) |> whitespace() |> concat(quoted_key()))
+      |> whitespace()
       |> ignore(right_bracket())
       |> tag(:bracket_child)
 
@@ -139,16 +170,18 @@ defmodule JSONPathEx.Helpers do
     utf8_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?., ?@, ?-], min: 1)
   end
 
+  # Quoted field names allow any content (spaces, unicode, escapes …)
   def quoted_field_name do
     choice([
-      field_name(),
-      between(ignore(single_quote()), ignore(single_quote()), field_name()),
-      between(ignore(double_quote()), ignore(double_quote()), field_name())
+      single_quoted_string(),
+      double_quoted_string(),
+      field_name()
     ])
   end
 
   def value do
     choice([
+      float_value(),
       numeric_index(),
       single_quoted_string(),
       double_quoted_string(),
@@ -158,21 +191,23 @@ defmodule JSONPathEx.Helpers do
     |> unwrap_and_tag(:value)
   end
 
+  # list_value properly ignores brackets and commas in the AST
   def list_value do
-    between(
-      left_bracket(),
-      right_bracket(),
-      value() |> repeat(comma() |> whitespace() |> concat(value()))
-    )
+    ignore(left_bracket())
+    |> whitespace()
+    |> concat(value())
+    |> repeat(whitespace() |> ignore(comma()) |> whitespace() |> concat(value()), min: 1)
+    |> whitespace()
+    |> ignore(right_bracket())
     |> tag(:list_value)
   end
 
   # Quoted key (e.g., "keyName")
   def quoted_key, do: quoted_field_name()
 
-  def operand do
+  def operand(extra_path_steps \\ []) do
     choice([
-      current_context(),
+      current_context(extra_path_steps),
       root_key(),
       list_value(),
       value()
@@ -180,14 +215,14 @@ defmodule JSONPathEx.Helpers do
     |> unwrap_and_tag(:operand)
   end
 
-  def current_context,
+  def current_context(extra_path_steps \\ []),
     do:
       current()
-      |> concat(optional(json_field_path()))
+      |> concat(optional(json_field_path(extra_path_steps)))
       |> whitespace()
       |> tag(:current_context)
 
-  def root_key, do: root() |> repeat(choice([dot_child(), bracket_child()])) |> tag(:root_key)
+  def root_key, do: root() |> repeat(choice([dot_child(), array(), bracket_child()])) |> tag(:root_key)
 
   def between(left, right, parser) do
     left
@@ -205,6 +240,18 @@ defmodule JSONPathEx.Helpers do
     |> reduce({__MODULE__, :to_integer, []})
   end
 
+  # Float literal: optional sign, digits, dot, digits (e.g. 8.95, -0.5)
+  def float_value do
+    sign = optional(string("-"))
+    int_part = ascii_string([?0..?9], min: 1)
+    frac_part = string(".") |> concat(ascii_string([?0..?9], min: 1))
+
+    sign
+    |> concat(int_part)
+    |> concat(frac_part)
+    |> reduce({__MODULE__, :to_float, []})
+  end
+
   def to_integer(x) do
     case x do
       [_sign, digits] -> -String.to_integer(digits)
@@ -212,18 +259,20 @@ defmodule JSONPathEx.Helpers do
     end
   end
 
-  def json_field_path do
+  def to_float(parts) do
+    parts |> Enum.join() |> String.to_float()
+  end
+
+  def join_strings(parts), do: Enum.join(parts)
+
+  def json_field_path(extra_steps \\ []) do
     repeat(
-      choice([
+      choice(extra_steps ++ [
         dot_child(),
         array(),
         bracket_child(),
         function()
       ])
     )
-  end
-
-  defp all_chars do
-    [?a..?z, ?A..?Z, ?0..?9, ?_, ?[, ?], ?:, ?-, ?@, ?.]
   end
 end

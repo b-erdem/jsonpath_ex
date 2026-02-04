@@ -7,7 +7,6 @@ defmodule JSONPathEx.Parser do
   for further processing.
   """
 
-  require Logger
   import NimbleParsec
   alias JSONPathEx.Helpers
 
@@ -38,11 +37,17 @@ defmodule JSONPathEx.Parser do
 
   Filters use expressions and logical operators for conditional selection.
   """
+  # Supports both [?(expr)] and shorthand [?expr]
   defparsec(
     :filter_expression,
-    ignore(string("[?("))
-    |> parsec(:expression)
-    |> ignore(string(")]"))
+    choice([
+      ignore(string("[?("))
+      |> parsec(:expression)
+      |> ignore(string(")]")),
+      ignore(string("[?"))
+      |> parsec(:expression)
+      |> ignore(string("]"))
+    ])
     |> tag(:filter_expression),
     export_metadata: true
   )
@@ -65,7 +70,7 @@ defmodule JSONPathEx.Parser do
   defcombinatorp(
     :operand,
     choice([
-      optional(Helpers.not_()) |> concat(Helpers.operand()),
+      optional(Helpers.not_()) |> concat(Helpers.operand([parsec(:filter_expression)])),
       parsec(:grouping)
     ])
   )
@@ -94,23 +99,23 @@ defmodule JSONPathEx.Parser do
 
   ## Examples
 
-      iex> JSONPathEx.Parser.parse("$.store.book[*].author")
-      {:ok, [{:root, "$"}, {:dot_child, "store"}, ...]}
+      iex> {:ok, ast} = JSONPathEx.Parser.parse("$.store.book[*].author")
+      iex> List.first(ast)
+      {:root, "$"}
 
       iex> JSONPathEx.Parser.parse("invalid")
-      {:error, "Invalid JSONPath expression"}
+      {:error, "Incorrect value. expected string \\"$\\""}
+
   """
   def parse(value) do
     case jsonpath(value) do
       {:ok, parsed_value, "", _, _, _} ->
         {:ok, parsed_value}
 
-      {:ok, _parsed_value, tail, _, _, _} ->
-        Logger.warning("Could not parse value completely. Value: #{value}, tail: #{tail}")
+      {:ok, _parsed_value, _tail, _, _, _} ->
         {:error, "Invalid JSONPath expression"}
 
-      {:error, message, value_tried, _, _, _} ->
-        Logger.error("Could not parse value. Value: #{value_tried}, error: #{message}")
+      {:error, message, _value_tried, _, _, _} ->
         {:error, "Incorrect value. #{message}"}
     end
   end
