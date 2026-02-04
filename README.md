@@ -24,7 +24,7 @@ Add `jsonpath_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:jsonpath_ex, "~> 0.1.0"}
+    {:jsonpath_ex, "~> 0.2.0"}
   ]
 end
 ```
